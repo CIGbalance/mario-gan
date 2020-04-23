@@ -14,7 +14,7 @@ from torch.autograd import Variable
 import sys
 import os
 import numpy
-from pytorch.models import dcgan
+from .pytorch.models import dcgan
 import glob
 from collections import OrderedDict
 
