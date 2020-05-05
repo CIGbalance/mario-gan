@@ -14,7 +14,7 @@ from torch.autograd import Variable
 import sys
 import os
 import numpy
-from .gan_implementation.models import dcgan
+from gan_implementation.models import dcgan
 import glob
 from collections import OrderedDict
 
@@ -147,7 +147,10 @@ def leniency(x, netG, dim):
     t = numpy.array(gap_lengths(im))
     if count_gaps(im) > 0:
         val -= numpy.mean(t[t != 0])
-    return val
+    width = numpy.shape(im)[1]
+    height = numpy.shape(im)[0]
+    tiles = width * height
+    return ((val+tiles)/(2*tiles))
 
 # Percentage of stackable items
 # Value range 0-1
@@ -220,16 +223,18 @@ def positionDistribution(x, netG, dim):
     im = translateLatentVector(x, netG, dim)
     height = numpy.shape(im)[0]
     xm, xs, ym, ys = tilePositionSummaryStats(im, [GROUND, BREAK, QUESTIONP, QUESTIONC, TUBE, PLANT, BILL])
-    print(numpy.std(numpy.array([0, height-1])))
-    return (-ys)
+    maxSD = numpy.std(numpy.array([0, height-1]))
+    return (-ys/maxSD + 1)
 
 # get horizontal distribution of enemies
 # Value range ?
 # maximise
 def enemyDistribution(x, netG, dim):
     im = translateLatentVector(x, netG, dim)
+    width = numpy.shape(im)[1]
     xm, xs, ym, ys = tilePositionSummaryStats(im, [PLANT, BILL, GOOMBA, GKOOPA, RKOOPA, SPINY])
-    return (-xs)
+    maxSD = numpy.std(numpy.array([0, width-1]))
+    return (-xs/maxSD + 1)
 
 def translateLatentVector(x, netG, dim):
     ##Fix for new pytorch compatibility below (from Jacob)
@@ -274,7 +279,8 @@ def translateLatentVector(x, netG, dim):
 def progressSimAStar(x, netG, dim):
     return executeSimulation(x, netG, dim, 0, 0)
 def basicFitnessSimAStar(x, netG, dim):
-    return executeSimulation(x, netG, dim, 1, 0)
+    val = executeSimulation(x, netG, dim, 1, 0)
+    return ((val+0.04)/1.26)
 def airTimeSimAStar(x, netG, dim):
     return executeSimulation(x, netG, dim, 2, 0)
 def timeTakenSimAStar(x, netG, dim):
@@ -282,7 +288,8 @@ def timeTakenSimAStar(x, netG, dim):
 def progressSimScared(x, netG, dim):
     return executeSimulation(x, netG, dim, 0, 1)
 def basicFitnessSimScared(x, netG, dim):
-    return executeSimulation(x, netG, dim, 1, 1)
+    val = executeSimulation(x, netG, dim, 1, 1)
+    return ((val+0.04)/1.26)
 def airTimeSimScared(x, netG, dim):
     return executeSimulation(x, netG, dim, 2, 1)
 def timeTakenSimScared(x, netG, dim):
@@ -365,7 +372,7 @@ def evaluate_mario_gan(suite_name, problem, inst, x):
 
 if __name__ == '__main__':
     out = evaluate_mario_gan(
-        "mario-gan", 3, 1, [0.577396866201949, 0.7814522617215477, -0.4290037786827649,
+        "mario-gan", 11, 1, [0.577396866201949, 0.7814522617215477, -0.4290037786827649,
                              -0.7939910428259774, 0.4272655228644559, -0.4788319759161429,
                              0.7092257647567968, -0.7713656070501105, 0.751081985876608,
                              -0.7008837870643055])
