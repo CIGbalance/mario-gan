@@ -218,7 +218,9 @@ def decorationFrequency(x, netG, dim):
 # maximise
 def positionDistribution(x, netG, dim):
     im = translateLatentVector(x, netG, dim)
+    height = numpy.shape(im)[0]
     xm, xs, ym, ys = tilePositionSummaryStats(im, [GROUND, BREAK, QUESTIONP, QUESTIONC, TUBE, PLANT, BILL])
+    print(numpy.std(numpy.array([0, height-1])))
     return (-ys)
 
 # get horizontal distribution of enemies
@@ -363,7 +365,7 @@ def evaluate_mario_gan(suite_name, problem, inst, x):
 
 if __name__ == '__main__':
     out = evaluate_mario_gan(
-        "mario-gan", 21, 1, [0.577396866201949, 0.7814522617215477, -0.4290037786827649,
+        "mario-gan", 3, 1, [0.577396866201949, 0.7814522617215477, -0.4290037786827649,
                              -0.7939910428259774, 0.4272655228644559, -0.4788319759161429,
                              0.7092257647567968, -0.7713656070501105, 0.751081985876608,
                              -0.7008837870643055])
