@@ -361,7 +361,7 @@ def evaluate_mario_gan(suite_name, problem, inst, x):
         raise ValueError("asked for instance '{}', but is not available".format(inst))
 
     probs = [problem]
-    if suite_name == 'mario-gan-biobj':
+    if suite_name == 'rw-mario-gan-biobj':
         probs = [j - 1 for j in biProbSplitter(problem)]
 
     out = [None] * len(probs)
