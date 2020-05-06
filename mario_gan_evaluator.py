@@ -45,7 +45,7 @@ GKOOPA = 10
 RKOOPA = 11
 SPINY = 12
 
-sim=1
+sim=30
 path = os.path.dirname(os.path.abspath(__file__))
 
 #        tiles.put('X', 0); //solid
@@ -122,7 +122,7 @@ def tilePositionSummaryStats(im, tiles):
 def executeSimulation(x, netG, dim, fun, agent):
     java_output = subprocess.check_output('java -Djava.awt.headless=true -jar '+path+'/dist/MarioGAN.jar "' + str(x) +'" "' + netG + '" '+str(dim)+' '+str(fun)+' '+str(agent) +' ' +str(sim), shell=True);
     lines = java_output.split(b'\n')
-    result = lines[11+sim].decode("utf-8")
+    result = lines[len(lines)-5].decode("utf-8")
     if "Result" not in result:
         raise ValueError('MarioGAN.jar output not formatted as expected, got {} '.format(result))
     return float(result[6:])
