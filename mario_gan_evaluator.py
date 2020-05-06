@@ -14,7 +14,10 @@ from torch.autograd import Variable
 import sys
 import os
 import numpy
-from gan_implementation.models import dcgan
+try:
+    from gan_implementation.models import dcgan
+except ModuleNotFoundError:
+    from .gan_implementation.models import dcgan
 import glob
 from collections import OrderedDict
 
