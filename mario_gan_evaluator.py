@@ -374,10 +374,9 @@ def evaluate_mario_gan(suite_name, problem, inst, x):
 
 
 if __name__ == '__main__':
-    out = evaluate_mario_gan(
-        "mario-gan", 11, 1, [0.577396866201949, 0.7814522617215477, -0.4290037786827649,
-                             -0.7939910428259774, 0.4272655228644559, -0.4788319759161429,
-                             0.7092257647567968, -0.7713656070501105, 0.751081985876608,
-                             -0.7008837870643055])
-    print(out)
-
+    x = [0.5] * 10
+    fs = [1, 4, 5, 8, 9, 11, 16, 19, 21, 26, 28]
+    sim = 2
+    print('Evaluating some selected functions {} on x = {} (using only {} simulations to make it quick)'.format(fs, x, sim))
+    for f in fs:
+    	print('f{}(x) = {}'.format(f, evaluate_mario_gan("mario-gan", f, 1, x)))

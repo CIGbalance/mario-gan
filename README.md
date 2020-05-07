@@ -1,9 +1,19 @@
-# mario-gan
-Mario Level Generation as an optimisation problem for the GBEA benchmark
+# Mario GAN
+Mario level generation as an optimisation problem within the [GBEA benchmark](http://www.gm.fh-koeln.de/~naujoks/gbea/gamesbench_doc.html#mariogan) (detailed information about the optimization problems can be found there).
 
-Data here is in compiled format (jar), source code is released here: https://github.com/TheHedgeify/DagstuhlGAN/tree/v1.0
+The data here is in compiled format (jar), while the source code is released in another Github repository: [https://github.com/TheHedgeify/DagstuhlGAN/tree/v1.0](https://github.com/TheHedgeify/DagstuhlGAN/tree/v1.0)
 
-```
-cd /this/repository
-java -Djava.awt.headless=true -jar $PWD/dist/MarioGAN.jar "[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]" $PWD/GAN/overworld-10-5000/netG_epoch_4999_5641.pth 10 1 0 1
-```
+## Requirements
+
+This code requires `PyTorch`, follow the installation instructions [here](https://pytorch.org/).
+
+## Test
+
+Call
+````
+python mario_gan_evaluator.py 
+````
+
+to run a test evaluation for some selected Mario GAN functions.
+
+Note that this does test the correctness of the evaluation, but rather checks that the code is being executed without problems.
