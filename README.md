@@ -9,7 +9,16 @@ Github repository:
 
 ## Requirements
 
-This code requires `PyTorch`, follow the installation instructions [here](https://pytorch.org/).
+````
+future>=0.17.1 
+scipy>=1.3.1 
+torch>=1.2.0 
+torchvision>=0.4.0
+````
+
+(Earlier versions of these packages might also work.)
+
+For `PyTorch`, follow the installation instructions [here](https://pytorch.org/).
 
 ## Test
 
