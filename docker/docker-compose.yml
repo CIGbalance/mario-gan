@@ -1,0 +1,13 @@
+# docker-compose run mario bash
+
+services:
+
+  mario:
+    container_name: mario
+    env_file: .env
+    build:
+        context: ..
+        dockerfile: docker/Dockerfile
+    volumes:
+        - ..:/mario
+    entrypoint: bash

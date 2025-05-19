@@ -119,7 +119,7 @@ def tilePositionSummaryStats(im, tiles):
         y_coords = numpy.append(y_coords, tmp[0])
     return numpy.mean(x_coords), numpy.std(x_coords), numpy.mean(y_coords), numpy.std(y_coords)
 
-def executeSimulation(x, netG, dim, fun, agent):
+def executeSimulation(x, netG, dim, fun, agent, sim):
     java_output = subprocess.check_output('java -Djava.awt.headless=true -jar '+path+'/dist/MarioGAN.jar "' + str(x) +'" "' + netG + '" '+str(dim)+' '+str(fun)+' '+str(agent) +' ' +str(sim), shell=True);
     lines = java_output.split(b'\n')
     result = lines[len(lines)-5].decode("utf-8")
@@ -279,24 +279,24 @@ def translateLatentVector(x, netG, dim):
 
 
 
-def progressSimAStar(x, netG, dim):
-    return executeSimulation(x, netG, dim, 0, 0)
-def basicFitnessSimAStar(x, netG, dim):
-    val = executeSimulation(x, netG, dim, 1, 0)
+def progressSimAStar(x, netG, dim, sim):
+    return executeSimulation(x, netG, dim, 0, 0, sim)
+def basicFitnessSimAStar(x, netG, dim, sim):
+    val = executeSimulation(x, netG, dim, 1, 0, sim)
     return ((val+0.04)/1.26)
-def airTimeSimAStar(x, netG, dim):
-    return executeSimulation(x, netG, dim, 2, 0)
-def timeTakenSimAStar(x, netG, dim):
-    return executeSimulation(x, netG, dim, 3, 0)
-def progressSimScared(x, netG, dim):
-    return executeSimulation(x, netG, dim, 0, 1)
-def basicFitnessSimScared(x, netG, dim):
-    val = executeSimulation(x, netG, dim, 1, 1)
+def airTimeSimAStar(x, netG, dim, sim):
+    return executeSimulation(x, netG, dim, 2, 0, sim)
+def timeTakenSimAStar(x, netG, dim, sim):
+    return executeSimulation(x, netG, dim, 3, 0, sim)
+def progressSimScared(x, netG, dim, sim):
+    return executeSimulation(x, netG, dim, 0, 1, sim)
+def basicFitnessSimScared(x, netG, dim, sim):
+    val = executeSimulation(x, netG, dim, 1, 1, sim)
     return ((val+0.04)/1.26)
-def airTimeSimScared(x, netG, dim):
-    return executeSimulation(x, netG, dim, 2, 1)
-def timeTakenSimScared(x, netG, dim):
-    return executeSimulation(x, netG, dim, 3, 1)
+def airTimeSimScared(x, netG, dim, sim):
+    return executeSimulation(x, netG, dim, 2, 1, sim)
+def timeTakenSimScared(x, netG, dim, sim):
+    return executeSimulation(x, netG, dim, 3, 1, sim)
 
 
 def decodeProblem(problem):
@@ -352,7 +352,7 @@ def getNetG(problem, inst, dim, c, json):
     return netG, dim
 
 
-def evaluate_mario_gan(suite_name, problem, inst, x):
+def evaluate_mario_gan(suite_name, problem, inst, x, sim=30):
     available_dims = [10, 20, 30, 40]
     available_instances = [5641, 3854, 8370, 494, 1944, 9249, 2517]
     if len(x) not in available_dims:  # check Dimension available
@@ -368,15 +368,19 @@ def evaluate_mario_gan(suite_name, problem, inst, x):
     for i, prob in enumerate(probs):
         c, json, fun = decodeProblem(prob - 1)  # -1 because COCO starts with index 1
         netG, d = getNetG(prob - 1, available_instances[inst - 1], len(x), c, json)  # -1 because COCO starts with index 1
-        out[i] = fun(x, netG, d)
+        if prob >= 11: # simulation problem
+            out[i] = fun(x, netG, d, sim)
+        else:
+            out[i] = fun(x, netG, d)
 
     return out
 
 
 if __name__ == '__main__':
-    x = [0.5] * 10
-    fs = [1, 4, 5, 8, 9, 11, 16, 19, 21, 26, 28]
-    sim = 2
+    x = [-0.1] * 10
+    #fs = [1, 4, 5, 8, 9, 11, 16, 19, 21, 26, 28]
+    fs = [9,10,11,12]
+    sim = 1
     print('Evaluating some selected functions {} on x = {} (using only {} simulations to make it quick)'.format(fs, x, sim))
     for f in fs:
-    	print('f{}(x) = {}'.format(f, evaluate_mario_gan("mario-gan", f, 1, x)))
+    	print('f{}(x) = {}'.format(f, evaluate_mario_gan("mario-gan", f, 1, x, sim)))
