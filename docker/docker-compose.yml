@@ -10,4 +10,5 @@ services:
         dockerfile: docker/Dockerfile
     volumes:
         - ..:/mario
-    entrypoint: bash
+    #entrypoint: bash
+    user: ${CURRENT_UID}

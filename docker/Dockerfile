@@ -19,3 +19,4 @@ ENV JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64/
 ENV MKL_SERVICE_FORCE_INTEL=1
 RUN export JAVA_HOME
 RUN export MKL_SERVICE_FORCE_INTEL
+
