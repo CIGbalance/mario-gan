@@ -120,7 +120,11 @@ def tilePositionSummaryStats(im, tiles):
     return numpy.mean(x_coords), numpy.std(x_coords), numpy.mean(y_coords), numpy.std(y_coords)
 
 def executeSimulation(x, netG, dim, fun, agent, sim):
-    java_output = subprocess.check_output('java -Djava.awt.headless=true -jar '+path+'/dist/MarioGAN.jar "' + str(x) +'" "' + netG + '" '+str(dim)+' '+str(fun)+' '+str(agent) +' ' +str(sim), shell=True);
+    command = 'java -Djava.awt.headless=true -jar ' + path+'/dist/MarioGAN.jar "' + str(x) +'" "' + netG + '" '+str(dim)+' '+str(fun) + ' '+str(agent) +' ' +str(sim)
+    process = subprocess.run(command, shell=True, capture_output=True);
+    if not isinstance(process, subprocess.CompletedProcess):
+        process.kill()
+    java_output = process.stdout
     lines = java_output.split(b'\n')
     result = lines[len(lines)-5].decode("utf-8")
     if "Result" not in result:
@@ -378,9 +382,11 @@ def evaluate_mario_gan(suite_name, problem, inst, x, sim=30):
 
 if __name__ == '__main__':
     x = [-0.1] * 10
+    xs = [0.1] * 10
     #fs = [1, 4, 5, 8, 9, 11, 16, 19, 21, 26, 28]
     fs = [9,10,11,12]
-    sim = 1
+    sim = 30
     print('Evaluating some selected functions {} on x = {} (using only {} simulations to make it quick)'.format(fs, x, sim))
     for f in fs:
     	print('f{}(x) = {}'.format(f, evaluate_mario_gan("mario-gan", f, 1, x, sim)))
+    	print('f{}(x) = {}'.format(f, evaluate_mario_gan("mario-gan", f, 1, xs, sim)))

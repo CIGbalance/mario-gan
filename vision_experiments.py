@@ -3,6 +3,8 @@ from typing import List
 from mario_gan_evaluator import *
 import pandas as pd
 import argparse
+import time
+import os
 
 def lhc(dim:int, n:int):
     # Between -1 and 1, 10 dimensions
@@ -17,18 +19,26 @@ def collect_data(f_list: List[int],
     """
     Collect data from a list of functions.
     """
-    data = []
+    params_name = "dim_{}_n_{}_sim_{}".format(dim, n,sim)
+    output_file = f"data_{params_name}.csv"
     samples = lhc(dim, n)
     for sample in samples:
-        print(sample)
+        data_list = []
         x = {f"x_{i}": sample[i] for i in range(dim)}
         for i in range(sim):
             tmp_dat = {"i": i}
             tmp_dat.update(x)
             for f in f_list:
+                start = time.time()
                 tmp_dat[f"f_{f}"]= evaluate_mario_gan("mario-gan", f, 1, list(sample), 1)[0]
-            data.append(tmp_dat)
-    return data
+                end = time.time()
+                tmp_dat[f"t_{f}"] = end - start
+            data_list.append(tmp_dat)
+        # Append the temporary data to the main DataFrame
+        data = pd.DataFrame(data_list)
+        # Save the data to a CSV file
+        data.to_csv(output_file, mode='a', header=not os.path.exists(output_file), index=False)
+    return output_file
 
 def parse_args():
     """
@@ -38,7 +48,7 @@ def parse_args():
     parser.add_argument("--dim", type=int, default=10, help="Number of dimensions")
     parser.add_argument("--n", type=int, default=1000, help="Number of samples")
     parser.add_argument("--sim", type=int, default=30, help="Number of simulations")
-    parser.add_argument("--f_list", type=int, nargs='+', default=[11, 17], help="List of functions to evaluate")
+    parser.add_argument("--f_list", type=int, nargs='+', default=[11, 17, 13, 19], help="List of functions to evaluate")
     return parser.parse_args()
 
 
@@ -54,12 +64,9 @@ def main():
         "f_list": args.f_list
     }
     # Collect data
-    data = collect_data(**params)
-    # Convert to DataFrame
-    df = pd.DataFrame(data)
-    # Save to CSV
-    params_name = "dim_{}_n_{}_sim_{}".format(params["dim"], params["n"], params["sim"])
-    df.to_csv(f"data_{params_name}.csv", index=False)
+    data_file = collect_data(**params)
+    print(f"Data collected and saved to {data_file}")
+
 
 if __name__ == "__main__":
     main()
