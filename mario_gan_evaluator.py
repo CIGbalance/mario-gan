@@ -14,6 +14,7 @@ from torch.autograd import Variable
 import sys
 import os
 import numpy
+
 try:
     from gan_implementation.models import dcgan
 except ModuleNotFoundError:
@@ -45,7 +46,7 @@ GKOOPA = 10
 RKOOPA = 11
 SPINY = 12
 
-sim=30
+sim = 30
 path = os.path.dirname(os.path.abspath(__file__))
 
 #        tiles.put('X', 0); //solid
@@ -77,63 +78,97 @@ def exist_gap(im):
         imc = im[:, i]
         unique, counts = numpy.unique(imc, return_counts=True)
         dist = dict(zip(unique, counts))
-        if dist.get(COIN, 0) + dist.get(PASS, 0) == height:  # all tiles in column passable
+        if (
+            dist.get(COIN, 0) + dist.get(PASS, 0) == height
+        ):  # all tiles in column passable
             gaps[i] = 1
     return gaps
+
 
 def count_gaps(im):
     gaps = exist_gap(im)
     return sum(gaps)
 
+
 def gap_lengths(im):
     gaps = exist_gap(im)
     gaps = "".join([str(int(x)) for x in gaps])
-    return list(map(len, gaps.split('0')))
+    return list(map(len, gaps.split("0")))
+
 
 def max_gap(im):
     return max(gap_lengths(im))
 
+
 def count_tile_type(im, tile):
-    num_tiles = (len(im[im == tile]))
+    num_tiles = len(im[im == tile])
     return num_tiles
+
 
 def gan_maximise_tile_type(x, nz, tile):
     return -count_tile_type(x, nz, tile)
 
+
 def gan_target_tile_type(x, nz, tile, target):
     return abs(target - count_tile_type(x, nz, tile))
+
 
 def gan_target_tile_type_frac(im, tile, target_frac):
     total_tiles = float(numpy.shape(im)[0] * numpy.shape(im)[1])
     return abs(target_frac - (count_tile_type(im, tile) / total_tiles))
 
+
 def tilePositionSummaryStats(im, tiles):
-    coords = numpy.where(im==tiles[0])
-    if len(coords[0])==0:
+    coords = numpy.where(im == tiles[0])
+    if len(coords[0]) == 0:
         return 0, 0, 0, 0
     x_coords = coords[1]
     y_coords = coords[0]
     for tile in tiles[1:]:
-        tmp = numpy.where(im==tile)
+        tmp = numpy.where(im == tile)
         x_coords = numpy.append(x_coords, tmp[1])
         y_coords = numpy.append(y_coords, tmp[0])
-    return numpy.mean(x_coords), numpy.std(x_coords), numpy.mean(y_coords), numpy.std(y_coords)
+    return (
+        numpy.mean(x_coords),
+        numpy.std(x_coords),
+        numpy.mean(y_coords),
+        numpy.std(y_coords),
+    )
+
 
 def executeSimulation(x, netG, dim, fun, agent, sim):
-    command = 'java -Djava.awt.headless=true -jar ' + path+'/dist/MarioGAN.jar "' + str(x) +'" "' + netG + '" '+str(dim)+' '+str(fun) + ' '+str(agent) +' ' +str(sim)
-    process = subprocess.run(command, shell=True, capture_output=True);
+    command = (
+        "java -Djava.awt.headless=true -jar "
+        + path
+        + '/dist/MarioGAN.jar "'
+        + str(x)
+        + '" "'
+        + netG
+        + '" '
+        + str(dim)
+        + " "
+        + str(fun)
+        + " "
+        + str(agent)
+        + " "
+        + str(sim)
+    )
+    process = subprocess.run(command, shell=True, capture_output=True)
     if not isinstance(process, subprocess.CompletedProcess):
         process.kill()
     java_output = process.stdout
-    lines = java_output.split(b'\n')
-    result = lines[len(lines)-5].decode("utf-8")
+    lines = java_output.split(b"\n")
+    result = lines[len(lines) - 5].decode("utf-8")
     if "Result" not in result:
-        raise ValueError('MarioGAN.jar output not formatted as expected, got {} '.format(result))
+        raise ValueError(
+            "MarioGAN.jar output not formatted as expected, got {} ".format(result)
+        )
     return float(result[6:])
 
 
 ################################################################################################
 # Fitness Functions
+
 
 # Estimates the leniency of the level
 # Value range?
@@ -157,7 +192,8 @@ def leniency(x, netG, dim):
     width = numpy.shape(im)[1]
     height = numpy.shape(im)[0]
     tiles = width * height
-    return ((val+tiles)/(2*tiles))
+    return (val + tiles) / (2 * tiles)
+
 
 # Percentage of stackable items
 # Value range 0-1
@@ -173,7 +209,7 @@ def density(x, netG, dim):
     val += dist.get(GROUND, 0)
     val += dist.get(BREAK, 0)
     val = float(val) / (width * height)
-    return (1-val)
+    return 1 - val
 
 
 # Estimates how much of the space can be reached by computing how many of the tiles can be stood upon
@@ -191,11 +227,11 @@ def negativeSpace(x, netG, dim):
     val += dist.get(BREAK, 0)
     val += dist.get(QUESTIONC, 0)
     val += dist.get(QUESTIONP, 0)
-    val += dist.get(TUBE, 0) * 2 # Because only one tile, but width of 2
-    val += dist.get(PLANT, 0) * 2 # Because only one tile, but width of 2
+    val += dist.get(TUBE, 0) * 2  # Because only one tile, but width of 2
+    val += dist.get(PLANT, 0) * 2  # Because only one tile, but width of 2
     val += dist.get(BILL, 0)
     val = float(val) / (width * height)
-    return (1-val)
+    return 1 - val
 
 
 # Frequency of pretty tiles, i.e. non-standard.
@@ -221,7 +257,8 @@ def decorationFrequency(x, netG, dim):
     val += dist.get(RKOOPA, 0)
     val += dist.get(SPINY, 0)
     val = float(val) / (width * height)
-    return (1-val)
+    return 1 - val
+
 
 # gets vertical distribution of tiles you can stand on
 # Value range ?
@@ -229,9 +266,12 @@ def decorationFrequency(x, netG, dim):
 def positionDistribution(x, netG, dim):
     im = translateLatentVector(x, netG, dim)
     height = numpy.shape(im)[0]
-    xm, xs, ym, ys = tilePositionSummaryStats(im, [GROUND, BREAK, QUESTIONP, QUESTIONC, TUBE, PLANT, BILL])
-    maxSD = numpy.std(numpy.array([0, height-1]))
-    return (-ys/maxSD + 1)
+    xm, xs, ym, ys = tilePositionSummaryStats(
+        im, [GROUND, BREAK, QUESTIONP, QUESTIONC, TUBE, PLANT, BILL]
+    )
+    maxSD = numpy.std(numpy.array([0, height - 1]))
+    return -ys / maxSD + 1
+
 
 # get horizontal distribution of enemies
 # Value range ?
@@ -239,9 +279,12 @@ def positionDistribution(x, netG, dim):
 def enemyDistribution(x, netG, dim):
     im = translateLatentVector(x, netG, dim)
     width = numpy.shape(im)[1]
-    xm, xs, ym, ys = tilePositionSummaryStats(im, [PLANT, BILL, GOOMBA, GKOOPA, RKOOPA, SPINY])
-    maxSD = numpy.std(numpy.array([0, width-1]))
-    return (-xs/maxSD + 1)
+    xm, xs, ym, ys = tilePositionSummaryStats(
+        im, [PLANT, BILL, GOOMBA, GKOOPA, RKOOPA, SPINY]
+    )
+    maxSD = numpy.std(numpy.array([0, width - 1]))
+    return -xs / maxSD + 1
+
 
 def translateLatentVector(x, netG, dim):
     ##Fix for new pytorch compatibility below (from Jacob)
@@ -251,9 +294,9 @@ def translateLatentVector(x, netG, dim):
     deprecatedModel = torch.load(netG, map_location=lambda storage, loc: storage)
     # Make new model with weights/parameters from deprecatedModel but labels/keys from generator.state_dict()
     fixedModel = OrderedDict()
-    for (goodKey,ignore) in list(generator.state_dict().items()):
-    # Take the good key and replace the : with . in order to get the deprecated key so the associated value can be retrieved
-        badKey = goodKey.replace(":",".")
+    for goodKey, ignore in list(generator.state_dict().items()):
+        # Take the good key and replace the : with . in order to get the deprecated key so the associated value can be retrieved
+        badKey = goodKey.replace(":", ".")
         # Some parameter settings of the generator.state_dict() are not actually part of the saved models
         if badKey in deprecatedModel:
             goodValue = deprecatedModel[badKey]
@@ -263,7 +306,7 @@ def translateLatentVector(x, netG, dim):
         # If the fixedModel was empty, then the model was trained with the new labels, and the regular load process is fine
         generator.load_state_dict(deprecatedModel)
     else:
-        # Load the parameters with the fixed labels  
+        # Load the parameters with the fixed labels
         generator.load_state_dict(fixedModel)
 
     inp = numpy.array_split(x, len(x) / dim)
@@ -282,77 +325,107 @@ def translateLatentVector(x, netG, dim):
     return final
 
 
-
 def progressSimAStar(x, netG, dim, sim):
     return executeSimulation(x, netG, dim, 0, 0, sim)
+
+
 def basicFitnessSimAStar(x, netG, dim, sim):
     val = executeSimulation(x, netG, dim, 1, 0, sim)
-    return ((val+0.04)/1.26)
+    return (val + 0.04) / 1.26
+
+
 def airTimeSimAStar(x, netG, dim, sim):
     return executeSimulation(x, netG, dim, 2, 0, sim)
+
+
 def timeTakenSimAStar(x, netG, dim, sim):
     return executeSimulation(x, netG, dim, 3, 0, sim)
+
+
 def progressSimScared(x, netG, dim, sim):
     return executeSimulation(x, netG, dim, 0, 1, sim)
+
+
 def basicFitnessSimScared(x, netG, dim, sim):
     val = executeSimulation(x, netG, dim, 1, 1, sim)
-    return ((val+0.04)/1.26)
+    return (val + 0.04) / 1.26
+
+
 def airTimeSimScared(x, netG, dim, sim):
     return executeSimulation(x, netG, dim, 2, 1, sim)
+
+
 def timeTakenSimScared(x, netG, dim, sim):
     return executeSimulation(x, netG, dim, 3, 1, sim)
 
 
 def decodeProblem(problem):
     available_jsons = ["overworld", "underground"]  # G
-    available_fit = [enemyDistribution, positionDistribution, decorationFrequency, negativeSpace, leniency,
-                     basicFitnessSimAStar, basicFitnessSimAStar, basicFitnessSimScared,
-                     airTimeSimAStar, airTimeSimAStar, airTimeSimScared,
-                     timeTakenSimAStar, timeTakenSimAStar, timeTakenSimScared]  # F
+    available_fit = [
+        enemyDistribution,
+        positionDistribution,
+        decorationFrequency,
+        negativeSpace,
+        leniency,
+        basicFitnessSimAStar,
+        basicFitnessSimAStar,
+        basicFitnessSimScared,
+        airTimeSimAStar,
+        airTimeSimAStar,
+        airTimeSimScared,
+        timeTakenSimAStar,
+        timeTakenSimAStar,
+        timeTakenSimScared,
+    ]  # F
     available_c = [0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0]
 
     f = int(problem / len(available_jsons))
     c = available_c[f]
     g = problem % len(available_jsons)
     return c, available_jsons[g], available_fit[f]
-    
+
 
 def biProbSplitter(problem_id):
-    if problem_id==1:
+    if problem_id == 1:
         return [4, 6]
-    elif problem_id==2:
-        return [4, 8]    
-    elif problem_id==3:
+    elif problem_id == 2:
+        return [4, 8]
+    elif problem_id == 3:
         return [11, 17]
-    elif problem_id==4:
+    elif problem_id == 4:
         return [11, 23]
-    elif problem_id==5:
+    elif problem_id == 5:
         return [12, 18]
-    elif problem_id==6:
+    elif problem_id == 6:
         return [12, 24]
-    elif problem_id==7:
+    elif problem_id == 7:
         return [13, 19]
-    elif problem_id==8:
+    elif problem_id == 8:
         return [13, 25]
-    elif problem_id==9:
+    elif problem_id == 9:
         return [14, 20]
-    elif problem_id==10:
+    elif problem_id == 10:
         return [14, 26]
     else:
-        raise ValueError('Suite {} has no function {}'.format("mario-gan-biobj", problem_id))
+        raise ValueError(
+            "Suite {} has no function {}".format("mario-gan-biobj", problem_id)
+        )
+
 
 def getNetG(problem, inst, dim, c, json):
     if c == 1:
         dim = 5
 
     # print(path)
-    pattern = "{}/GAN/{}-{}-{}/netG_epoch_*_{}.pth".format(path,json, dim, budget,
-                                                            inst)
+    pattern = "{}/GAN/{}-{}-{}/netG_epoch_*_{}.pth".format(
+        path, json, dim, budget, inst
+    )
     files = glob.glob(pattern)
 
     epochs = [int(str.split(os.path.basename(file), "_")[2]) for file in files]
-    netG = "{}/GAN/{}-{}-{}/netG_epoch_{}_{}.pth".format(path, json, dim, budget, max(epochs),
-                                                          inst)
+    netG = "{}/GAN/{}-{}-{}/netG_epoch_{}_{}.pth".format(
+        path, json, dim, budget, max(epochs), inst
+    )
     return netG, dim
 
 
@@ -365,14 +438,16 @@ def evaluate_mario_gan(suite_name, problem, inst, x, sim=30):
         raise ValueError("asked for instance '{}', but is not available".format(inst))
 
     probs = [problem]
-    if suite_name == 'rw-mario-gan-biobj':
+    if suite_name == "rw-mario-gan-biobj":
         probs = [j - 1 for j in biProbSplitter(problem)]
 
     out = [None] * len(probs)
     for i, prob in enumerate(probs):
         c, json, fun = decodeProblem(prob - 1)  # -1 because COCO starts with index 1
-        netG, d = getNetG(prob - 1, available_instances[inst - 1], len(x), c, json)  # -1 because COCO starts with index 1
-        if prob >= 11: # simulation problem
+        netG, d = getNetG(
+            prob - 1, available_instances[inst - 1], len(x), c, json
+        )  # -1 because COCO starts with index 1
+        if prob >= 11:  # simulation problem
             out[i] = fun(x, netG, d, sim)
         else:
             out[i] = fun(x, netG, d)
@@ -380,13 +455,17 @@ def evaluate_mario_gan(suite_name, problem, inst, x, sim=30):
     return out
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     x = [-0.1] * 10
     xs = [0.1] * 10
-    #fs = [1, 4, 5, 8, 9, 11, 16, 19, 21, 26, 28]
-    fs = [9,10,11,12]
-    sim = 30
-    print('Evaluating some selected functions {} on x = {} (using only {} simulations to make it quick)'.format(fs, x, sim))
+    # fs = [1, 4, 5, 8, 9, 11, 16, 19, 21, 26, 28]
+    fs = [9, 10, 11, 12]
+    sim = 2
+    print(
+        "Evaluating some selected functions {} on x = {} (using only {} simulations to make it quick)".format(
+            fs, x, sim
+        )
+    )
     for f in fs:
-    	print('f{}(x) = {}'.format(f, evaluate_mario_gan("mario-gan", f, 1, x, sim)))
-    	print('f{}(x) = {}'.format(f, evaluate_mario_gan("mario-gan", f, 1, xs, sim)))
+        print("f{}(x) = {}".format(f, evaluate_mario_gan("mario-gan", f, 1, x, sim)))
+        print("f{}(x) = {}".format(f, evaluate_mario_gan("mario-gan", f, 1, xs, sim)))
