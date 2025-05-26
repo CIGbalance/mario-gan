@@ -395,7 +395,7 @@ nnoise_gg <- function(data, fs) {
 
 
 pdf("ngrid.pdf")
-ngrid_csv = "data_dim_10_n_1000_sim_30.csv"
+ngrid_csv = "data_dim_10_n_1000_sim_30_exp1.csv"
 ngrid_data = read.csv(ngrid_csv)
 ngrid_data = pre_grid(ngrid_data)
 nnoise(ngrid_data, fs=c(11, 17, 13, 19) )
@@ -413,10 +413,16 @@ plot_noise_clean(ngrid_data, fs=c(13,19), cl=c(19))
 dev.off()
   
 
-# TODO load non-neighbour data
-#plot_fvt(grid_data, fs= c(11, 17, 13, 19))
-#plot_noise_dist(grid_data)
-
+pdf("grid.pdf")
+grid_csv = "data_dim_10_n_1000_sim_30_meteor.csv"
+grid_data = read.csv(grid_csv)
+grid_data = pre_grid(grid_data)
+plot_fvt_gg(grid_data, fs= c(11, 17))
+plot_fvt_gg(grid_data, fs= c(13, 19))
+plot_noise_dist_gg(grid_data, fs= c(11, 17, 13, 19))
+plot_noise_clean(grid_data, fs=c(11,17), cl=c(17))
+plot_noise_clean(grid_data, fs=c(13,19), cl=c(19))
+dev.off()
 
 pdf("linewalk.pdf")
 line_data = get_line_data(path="rw-gan-mario-diagonal-walk-random")

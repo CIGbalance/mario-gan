@@ -6,6 +6,7 @@ import argparse
 import time
 import os
 import numpy as np
+import random
 
 
 def lhc(dim: int, n: int):
