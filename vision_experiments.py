@@ -45,7 +45,9 @@ def collect_data(
     params_name = "dim_{}_n_{}_sim_{}".format(dim, n, sim)
     output_file = f"data_{params_name}.csv"
     samples = lhc(dim, n)
-    for i, sample in enumerate(samples):
+    order = random.sample(range(n), n)
+    for i in order:
+        sample = samples[i]
         # Run the Mario GAN evaluator for each sample
         data = run_mario_gan(list(sample), f_list, sim)
         data["sample"] = i
