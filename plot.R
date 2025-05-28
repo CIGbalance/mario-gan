@@ -257,12 +257,13 @@ plot_noise_clean = function(data,fs,cl){
       group_by(nx) %>%
       count(across(all_of(col_name)), name="freq") %>%
       mutate(total_in_group = sum(freq)) %>%
-      mutate(freq_pct = 100*freq / total_in_group)
-
+      mutate(freq_pct = 100*freq / total_in_group) %>%
+      filter(!any(freq_pct>50))
+    print(summary(df))
 
     uxf = length(unique(df$nx))
     plt = ggplot(df, aes(x = nx, y = !!sym(col_name), color = freq_pct)) +
-      geom_point(size=3) +
+      geom_point(size=1) +
       scale_x_discrete(drop = TRUE) +
       scale_color_gradient(low = "lightblue", high = "darkblue", name = "Freq (%)") +
       labs(
@@ -417,8 +418,8 @@ plot_fvt_gg(ngrid_data, fs= c(13, 19))
 #plot_noise_dist(ngrid_data, fs= c(11, 17, 13, 19))
 plot_noise_dist_gg(ngrid_data, fs= c(11, 17, 13, 19))
 
-plot_noise_clean(ngrid_data, fs=c(11,17), cl=c(17))
-plot_noise_clean(ngrid_data, fs=c(13,19), cl=c(19))
+#plot_noise_clean(ngrid_data, fs=c(11,17), cl=c(17))
+#plot_noise_clean(ngrid_data, fs=c(13,19), cl=c(19))
 dev.off()
   
 

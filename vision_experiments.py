@@ -1,6 +1,6 @@
 from scipy.stats import qmc
 from typing import List
-from mario_gan_evaluator import *
+from mario_gan_evaluator import * #from https://github.com/CIGbalance/mario-gan
 import pandas as pd
 import argparse
 import time
