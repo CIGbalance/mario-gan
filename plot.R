@@ -395,6 +395,15 @@ nnoise_gg <- function(data, fs) {
 
 
 pdf("ngrid.pdf")
+ngrid_data = data.frame()
+for(exp in c(1,2,3)){
+  ngrid_csv = paste("data_dim_10_n_1000_sim_30_exp",exp,".csv", sep="")
+  tmp_data = read.csv(ngrid_csv)
+  if(nrow(ngrid_data) > 0){
+    tmp_data$sample = tmp_data$sample + max(ngrid_data$sample)
+  }
+  ngrid_data = rbind(ngrid_data, tmp_data)
+}
 ngrid_csv = "data_dim_10_n_1000_sim_30_exp1.csv"
 ngrid_data = read.csv(ngrid_csv)
 ngrid_data = pre_grid(ngrid_data)
